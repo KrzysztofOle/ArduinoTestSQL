@@ -3,6 +3,8 @@
 #include <MySQL_Connection.h>
 #include <MySQL_Cursor.h>
 #include <LiquidCrystal_I2C.h>
+#include "advancedFunctions.h" // biblioteka zawierajaca watchdog-a
+
 
 String lcdLine[2];
 const String clearLcdLine = "                    ";
@@ -58,8 +60,24 @@ int Key=39;
 int StripSensorPozA=47;
 int StripSensorPozB=49;
   LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 20 chars and 4 line display
+
+// Begin reboot code
+int num_fails;                  // variable for number of failure attempts
+#define MAX_FAILED_CONNECTS 5   // maximum number of failed connects to MySQL
+
+void softwareReset() {
+  myPrint("......RESTART");
+  wdt.enable(500); // aktywujemy watchdog-a na 500ms
+  delay(1000);
+  myPrint("......1000.....");
+  for(;;); //this is a deadlock
+}
+// End reboot code
+
+
   
 void setup() {
+  wdt.enable(30000); // aktywujemy watchdog-a na 30s
   pinMode(Enkoder, INPUT_PULLUP);
   pinMode(TrybZczyt, INPUT_PULLUP);
   pinMode(AlarmOff, INPUT_PULLUP);
@@ -94,16 +112,57 @@ void setup() {
 
   Ethernet.begin(mac_addr);
   delay(1000);
+  wdt.restart();
   myPrint("Connecting...");
-  if (conn.connect(server_addr, 3306, user, password)) {
-    delay(1000);
-    // You would add your code here to run a query once on startup.
+
+  int conStat = 0;
+  num_fails = 0;                 // reset failures
+  while (conStat!=1) {
+    conStat = conn.connect(server_addr, 3306, user, password);
+    switch (conStat) {
+      case 1:
+        myPrint("Connection success.");
+        num_fails = 0;                 // reset failures
+        break;
+      case -1:
+        myPrint("Connection timed out.");
+        digitalWrite (alarm, HIGH);
+        delay(5000);
+        break;
+      case -2:
+        myPrint("Error invalid server.");
+        digitalWrite (alarm, HIGH);
+        delay(5000);
+        break;
+      case -3:
+        myPrint("Error truncated.");
+        digitalWrite (alarm, HIGH);
+        delay(5000);
+        break;
+      case -4:
+        myPrint("Error invalid response.");
+        digitalWrite (alarm, HIGH);
+        delay(5000);
+        break;
+      default:
+        myPrint("Error: connection.");
+        digitalWrite (alarm, HIGH);
+        delay(5000);
+        break;
+    }
+    if (!conn.connected()){
+      num_fails++;
+      if (num_fails == MAX_FAILED_CONNECTS) {
+        myPrint("I'm Rebooting...");
+        delay(2000);
+        // Here we tell the Arduino to reboot by redirecting the instruction
+        // pointer to the "top" or position 0. This is a soft reset and may
+        // not solve all hardware-related lockups.
+        softwareReset();
+      }  
+    }
   }
-  else {
-    myPrint("Connection failed.");
-    digitalWrite (alarm, HIGH);
-    //komunikat
-  }
+  
   
   // print your local IP address:
   printIPAddress();
@@ -140,9 +199,31 @@ void setup() {
   delete cur_mem;
   PrevEnkoder = digitalRead(Enkoder);
   prevTrybZczyt=digitalRead(TrybZczyt);
+  //
+  wdt.enable(5000); //ustawiamy watchdog-a na 5s
 }
 
+
+
 void loop() {
+  //static byte counter = 0;
+  // sprawdzamy stan połączenia 
+  if (conn.connected()) {
+    num_fails = 0;                 // reset failures    
+  } else {
+    delay(500);  
+    num_fails++;
+    if (num_fails == MAX_FAILED_CONNECTS) {
+      myPrint("I'm Rebooting...");
+      delay(2000);
+      // Here we tell the Arduino to reboot by redirecting the instruction
+      // pointer to the "top" or position 0. This is a soft reset and may
+      // not solve all hardware-related lockups.
+      softwareReset();
+    }
+  }
+
+  
   if (wlaczalarm==false && digitalRead(AlarmOff)==LOW){
     digitalWrite(alarm, LOW);  
   }
@@ -207,6 +288,7 @@ void loop() {
       for (int i=0;i<Ktasma.length();i++){
             Serial.write(Ktasma[i]); 
       }
+      Serial.println("");
       if (dts1=="null" and dts2=="null"){
         //digitalWrite(alarm , HIGH);
         wlaczalarm=true;
@@ -230,6 +312,8 @@ void loop() {
   if (digitalRead(TrybZczyt)==0 && prevTrybZczyt==1){
     prevTrybZczyt=0;
   }
+  //
+  wdt.restart();   // reset  watchdog-a
 }
 
 void myPrint(String txt) {
