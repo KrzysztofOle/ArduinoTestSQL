@@ -4,6 +4,8 @@
 #include <MySQL_Cursor.h>
 #include <LiquidCrystal_I2C.h>
 
+String lcdLine[2];
+const String clearLcdLine = "                    ";
 String LLval = "";
 String LOval = "";
 String HIval = "";
@@ -232,10 +234,19 @@ void loop() {
 
 void myPrint(String txt) {
   if (Serial) {
+    //jezeli jest terminal to wyślij do niego komu
     Serial.println(txt);  
   }
+  lcdLine[0] = lcdLine[1];
+  lcdLine[1] = txt;
   lcd.setCursor(0,2);
-  lcd.print(txt);  
+  lcd.print(clearLcdLine);  
+  lcd.setCursor(0,2);
+  lcd.print(lcdLine[0]);
+  lcd.setCursor(0,3);
+  lcd.print(clearLcdLine);  
+  lcd.setCursor(0,3);
+  lcd.print(lcdLine[1]);
 }
 
 //event odebranie i obsluga komunikatow z komputera//
