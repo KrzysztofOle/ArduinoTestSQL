@@ -67,9 +67,10 @@ int num_fails;                  // variable for number of failure attempts
 
 void softwareReset() {
   myPrint("......RESTART");
+  wdt.disable();
   wdt.enable(500); // aktywujemy watchdog-a na 500ms
-  delay(1000);
-  myPrint("......1000.....");
+  delay(2000);
+  myPrint("......2000.....");
   for(;;); //this is a deadlock
 }
 // End reboot code
@@ -153,7 +154,7 @@ void setup() {
     if (!conn.connected()){
       num_fails++;
       if (num_fails == MAX_FAILED_CONNECTS) {
-        myPrint("I'm Rebooting...");
+        myPrint("I'm Rebooting...156");
         delay(2000);
         // Here we tell the Arduino to reboot by redirecting the instruction
         // pointer to the "top" or position 0. This is a soft reset and may
@@ -170,6 +171,7 @@ void setup() {
 //*pobranie szerokosci nominalnej ostatnio zarejestrowanej przez baze*//
   MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
   cur_mem->execute("SELECT szer_nom FROM liniarur.tasma order by idtasma DESC LIMIT 1;");
+  myPrint("SELECT...last tasma;");
   delay (1000);
   column_names *columns = cur_mem->get_columns();
   row_values *row = NULL;
@@ -187,6 +189,7 @@ void setup() {
   for (int i=0;i<zap1.length();i++){
     Serial.print(zap1[i]);
   }
+  Serial.println("");
   zap1.toCharArray(buf0,200);
   cur_mem->execute(buf0);
   delay (1000);
@@ -211,10 +214,9 @@ void loop() {
   if (conn.connected()) {
     num_fails = 0;                 // reset failures    
   } else {
-    delay(500);  
     num_fails++;
     if (num_fails == MAX_FAILED_CONNECTS) {
-      myPrint("I'm Rebooting...");
+      myPrint("I'm Rebooting...219");
       delay(2000);
       // Here we tell the Arduino to reboot by redirecting the instruction
       // pointer to the "top" or position 0. This is a soft reset and may
@@ -347,14 +349,13 @@ void serialEvent() {
      inputString = "";
   }
 }
+
 //event odebranie i obsluga komunikatow z keyence//
 void serialEvent1() {
   while (Serial1.available()) {
     // get the new byte:
     inputString1 = Serial1.readStringUntil('\r');
-
-
-          Serial.write("keyence"); 
+    Serial.write("keyence"); 
 
         //lcd.clear();
         //lcd.setCursor(0,0);
@@ -422,8 +423,10 @@ void serialEvent1() {
          stringComplete1 = false;
   }
 }
+
 //event odebranie i obsluga danych z czytnika kodow//
 void serialEvent2() {
+  myPrint("Czytnik kodow...");
   while (Serial2.available()) {
     // get the new byte:
     char inChar = (char)Serial2.read();
@@ -432,8 +435,7 @@ void serialEvent2() {
     // if the incoming character is a newline, set a flag
 
   }
-  if (inputString2[inputString2.length()-1]==('\r'))
-  {
+  if (inputString2[inputString2.length()-1]==('\r')) {
     
     ///////////////////////stringComplete2 = true;
     //if (stringComplete2) {
