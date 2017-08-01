@@ -5,7 +5,7 @@
 #include <LiquidCrystal_I2C.h>
 #include "advancedFunctions.h" // biblioteka zawierajaca watchdog-a
 
-
+// test zmiany
 String lcdLine[2];
 const String clearLcdLine = "                    ";
 String LLval = "";
