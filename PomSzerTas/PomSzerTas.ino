@@ -1,11 +1,11 @@
-#include <Wire.h>   // standardowa biblioteka Arduino
-#include <Ethernet2.h>
+#include <Wire.h> // standardowa biblioteka Arduino
+#include <Ethernet2.h> // biblioteka umozliwiajaca polaczenie sieciowe 
 #include <MySQL_Connection.h>
 #include <MySQL_Cursor.h>
-#include <LiquidCrystal_I2C.h>
+#include <LiquidCrystal_I2C.h> // biblioteka umozliwiajaca kozystanie z wyswietlacza LCD
 #include "advancedFunctions.h" // biblioteka zawierajaca watchdog-a
 
-// test zmiany
+
 String lcdLine[2];
 const String clearLcdLine = "                    ";
 String LLval = "";
@@ -88,15 +88,15 @@ void setup() {
   pinMode(StripSensorPozA, INPUT_PULLUP);
   pinMode(StripSensorPozB, INPUT_PULLUP);
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(9600); // otwarcie portu dal komputera 9600 bps
   //while (!Serial); // wait for serial port to connect (czekamy na komputer)
   inputString.reserve(200);
   inputString1.reserve(200);
   inputString2.reserve(200);
   //wartosc.reserve(200);
   //znacznik.reserve(200);
-  Serial1.begin(9600);
-  Serial2.begin(9600);
+  Serial1.begin(9600); // otwarcie portu dla kontroler pomiarowy keyence z predkoscia 9600 bps
+  Serial2.begin(9600); // otwarcie portu dla czytnik kodow z predkoscia 9600 bps
   //
 
 
@@ -601,17 +601,17 @@ String ConvToKey (String data)
   return "";  
 }
 
-void printIPAddress()
+void printIPAddress() // wypisywanie adresu IP
 {
-  String tempIPAddress; 
-  tempIPAddress="My IP: ";
-  for (byte thisByte = 0; thisByte < 4; thisByte++) {
+  String tempIPAddress; // stworzenie nowego stringa tempIPAddress
+  tempIPAddress="My IP: "; // przypisanie wartosci poczatkowej do stringa tempIPAddress
+  for (byte thisByte = 0; thisByte < 4; thisByte++) { // petla zczytujaca kolejne byte adresu IP
     // print the value of each byte of the IP address:
-    tempIPAddress+=String(Ethernet.localIP()[thisByte], DEC);
-    if (thisByte < 3){
-      tempIPAddress+=".";
+    tempIPAddress+=String(Ethernet.localIP()[thisByte], DEC); // dodawanie kolejnych byteów kodu do strina tempIPAddress
+    if (thisByte < 3){ // warunek wstawienia separatora "." miedzy nastepnymi byteami adresu
+      tempIPAddress+="."; // dodatnie do stringa tempIPAddress separatora
     }
     
   }
-  myPrint(tempIPAddress);
+  myPrint(tempIPAddress); // wypisanie addresu IP
 }
