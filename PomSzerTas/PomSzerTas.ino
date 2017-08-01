@@ -1,9 +1,9 @@
-#include <Wire.h> // standardowa biblioteka Arduino
-#include <Ethernet2.h> // biblioteka umozliwiajaca polaczenie sieciowe 
+#include <Wire.h>               // standardowa biblioteka Arduino
+#include <Ethernet2.h>          // biblioteka umozliwiajaca polaczenie sieciowe 
 #include <MySQL_Connection.h>
 #include <MySQL_Cursor.h>
-#include <LiquidCrystal_I2C.h> // biblioteka umozliwiajaca kozystanie z wyswietlacza LCD
-#include "advancedFunctions.h" // biblioteka zawierajaca watchdog-a
+#include <LiquidCrystal_I2C.h>  // biblioteka umozliwiajaca kozystanie z wyswietlacza LCD
+#include "advancedFunctions.h"  // biblioteka zawierajaca watchdog-a
 
 
 String lcdLine[2];
@@ -20,7 +20,7 @@ byte mac_addr[] = { 0xB2, 0xE5, 0x96, 0xD2, 0x41, 0x7D };//BF-B1-94-D2-41-8D
 
 IPAddress server_addr(10,16,48,3);  // IP of the MySQL *server* here
 char user[] = "r3d";                // MySQL user login username
-char password[] = "r3d";           // MySQL user login password
+char password[] = "r3d";            // MySQL user login password
 IPAddress ip(10, 0, 21, 32);
 
 EthernetClient client;
@@ -78,15 +78,15 @@ void softwareReset() {
 
   
 void setup() {
-  wdt.enable(30000); // aktywujemy watchdog-a na 30s
-  pinMode(Enkoder, INPUT_PULLUP);
-  pinMode(TrybZczyt, INPUT_PULLUP);
-  pinMode(AlarmOff, INPUT_PULLUP);
-  pinMode(alarm, OUTPUT);
-  pinMode(AlarmLamp, OUTPUT);
-  pinMode(Key, INPUT_PULLUP);
-  pinMode(StripSensorPozA, INPUT_PULLUP);
-  pinMode(StripSensorPozB, INPUT_PULLUP);
+  wdt.enable(30000);                              // aktywujemy watchdog-a na 30s
+  pinMode(Enkoder, INPUT_PULLUP);                 // wejście - sygnal z plc lini ktury zmienia stan co 50mm tasmy
+  pinMode(TrybZczyt, INPUT_PULLUP);               // wejście - tryb pracy układu
+  pinMode(AlarmOff, INPUT_PULLUP);                // wejście - przycisk na panelu do wyciszania alrmu dziekowego
+  pinMode(alarm, OUTPUT);                         // wyjscie - 
+  pinMode(AlarmLamp, OUTPUT);                     // wyjscie -
+  pinMode(Key, INPUT_PULLUP);                     // wejście - 
+  pinMode(StripSensorPozA, INPUT_PULLUP);         // wejście - 
+  pinMode(StripSensorPozB, INPUT_PULLUP);         // wejście - 
   // put your setup code here, to run once:
   Serial.begin(9600); // otwarcie portu dal komputera 9600 bps
   //while (!Serial); // wait for serial port to connect (czekamy na komputer)
