@@ -1,9 +1,9 @@
-#include <Wire.h>                // standardowa biblioteka Arduino
+#include <Wire.h>                // biblioteka umozliwiajaca polaczenie z urzedzeniami I2C / TWI
 #include <Ethernet2.h>          // biblioteka umozliwiajaca polaczenie sieciowe 
 #include <MySQL_Connection.h>    // 
 #include <MySQL_Cursor.h>        // 
 #include <LiquidCrystal_I2C.h> // biblioteka umozliwiajaca kozystanie z wyswietlacza LCD
-#include "advancedFunctions.h"   // biblioteka zawierajaca watchdog-a
+//#include "advancedFunctions.h"   // biblioteka zawierajaca watchdog-a
 
 
 String lcdLine[2];                                  // bufor linii wyswietlacza LCD
@@ -16,12 +16,17 @@ String IdTasma = "";
 String SzerNom = "";
 int dts = 0;
 
-byte mac_addr[] = { 0xB2, 0xE5, 0x96, 0xD2, 0x41, 0x7D };//BF-B1-94-D2-41-8D
+//byte mac_addr[] = { 0xBF, 0xB1, 0x94, 0xD2, 0x41, 0x8D };  //BF-B1-94-D2-41-8D
+//byte mac_addr[] = { 0xAC, 0x0A, 0x0D, 0x2E, 0x5F, 0xE2 };  //
+//byte mac_addr[] = { 0x00, 0x10, 0xFA, 0x6E, 0x38, 0x4A };  //
+//byte mac_addr[] = { 0xE6, 0x5F, 0x28, 0xD9, 0x59, 0x0D };  // losowy mac adres
+//byte mac_addr[] = { 0x67, 0xF0, 0xEB, 0x16, 0x0F, 0x70 };  //
+byte mac_addr[] = { 0xC0, 0x4A, 0x00, 0xE6, 0x04, 0x25 };  //
 
 IPAddress server_addr(10, 16, 48, 3); // IP bazy danych MySQL
 char user[] = "r3d";                   // login do bazy danych MySQL
 char password[] = "r3d";               // haslo do bazy danych MySQL
-//IPAddress ip(10, 0, 21, 32);
+IPAddress ip(10, 0, 21, 32);
 
 EthernetClient client;
 MySQL_Connection conn((Client *)&client);
@@ -67,8 +72,8 @@ int num_fails;                  // liczba nieudanych prob polaczenia sie z baza 
 void softwareReset()            //definicja funkcji softReset
 {
   myPrint("......RESTART");     // wyswietlenie komunikatu za pomoca funkcji myPrint
-  wdt.disable();                // dezaktywacaja watchdog-a
-  wdt.enable(500);              // aktywacja watchdog-a na 500ms
+  //wdt.disable();                // dezaktywacaja watchdog-a
+  //wdt.enable(500);              // aktywacja watchdog-a na 500ms
   delay(2000);                  // wywolanie opoznienia na 2s
   myPrint("......2000.....");   // wyswietlenie komunikatu za pomoca funkcji myPrint
   for (;;);                     //deadlock
@@ -79,7 +84,7 @@ void softwareReset()            //definicja funkcji softReset
 
 void setup()
 {
-  wdt.enable(30000);                              // aktywujemy watchdog-a na 30s
+  //wdt.enable(30000);                              // aktywujemy watchdog-a na 30s
   pinMode(Enkoder, INPUT_PULLUP);                 // wejście - sygnal z plc lini ktory zmienia stan co 50mm tasmy
   pinMode(TrybZczyt, INPUT_PULLUP);               // wejście - tryb pracy układu
   pinMode(AlarmOff, INPUT_PULLUP);                // wejście - przycisk na panelu do wyciszania alrmu dziekowego
@@ -105,12 +110,15 @@ void setup()
   lcd.clear();                      // czyszczenie ekranu i ustawienie kursoraw w lewym gornym rogu
   lcd.setCursor(0, 0);              // ustawienie kursora w lewym gornym rogu (?do usunieciea?)
   lcd.print("    POMIAR TASMY    ");// bezposrednie wyswietlenie komunikatu
+  myPrint("");    
   myPrint("setup...");              // wyswietlenie komunikatu za pomoca funkcji myPrint
 
 
-  Ethernet.begin(mac_addr);
-  delay(1000);                    // wywowalanie opozniennia na 1s
-  wdt.restart();                  // restart watchdog-a
+  Ethernet.begin(mac_addr,ip);    // z adresem na sztywno szybciej sie łączy
+  //Ethernet.begin(mac_addr);      // IT zrobiło rezerwacje na adres IP wg adresu MAC
+  delay(5000);                    // wywowalanie opozniennia na 1s
+  //wdt.restart();                // restart watchdog-a
+  macPrint();
   myPrint("Connecting...");       // wyswietlenie komunikatu za pomoca funkcji myPrint
 
   int conStat = 0;               // zmienna przechowujaca "status polaczenia"
@@ -118,6 +126,13 @@ void setup()
   while (conStat != 1)
   {
     conStat = conn.connect(server_addr, 3306, user, password); // proba polaczenie z baza MySQL
+    if (conn.connected())  // sprawdzenie stanu połączenia 
+    {
+      myPrint("Connection success.........");  
+    } else {
+      myPrint("Not connected .........");
+    }
+    printIPAddress(); // wywoalnie funkcji printIPAddress
     switch (conStat)
     {
       case 1:
@@ -145,7 +160,11 @@ void setup()
         delay(5000);                       // wywolanie opoznienia na 5s
         break;
       default:
-        myPrint("Error: connection.");     // wyswietlenie komunikatu bledu za pomoca funkcji myPrint
+        String temp;
+        temp = "Error: connection.";
+        temp = temp + conStat;
+        myPrint(temp);     // wyswietlenie komunikatu bledu za pomoca funkcji myPrint
+        myPrint("..........."); 
         digitalWrite (alarm, HIGH);        // włączenie alarmu
         delay(5000);                       // wywolanie opoznienia na 5s
         break;
@@ -199,7 +218,7 @@ void setup()
   delete cur_mem;
   PrevEnkoder = digitalRead(Enkoder);
   prevTrybZczyt = digitalRead(TrybZczyt);
-  wdt.enable(5000); //ustawiamy watchdog-a na 5s
+  //wdt.enable(5000); //ustawiamy watchdog-a na 5s
 }
 
 
@@ -347,7 +366,7 @@ void loop()
   {
     prevTrybZczyt = 0;
   }
-  wdt.restart();           // reset  watchdog-a
+  //wdt.restart();           // reset  watchdog-a
 }
 
 void myPrint(String txt)   // definicja funkcji myPrint
@@ -368,17 +387,30 @@ void myPrint(String txt)   // definicja funkcji myPrint
   lcd.print(lcdLine[1]);   // wprowadzenie na wyswietlacz bufora dolnej linii
 }
 
+void macPrint() 
+{
+  Serial.print("mac:");
+  Serial.print(mac_addr[0],HEX); 
+  Serial.print("-");
+  Serial.print(mac_addr[1],HEX); 
+  Serial.print("-");
+  Serial.print(mac_addr[2],HEX); 
+  Serial.print("-");
+  Serial.print(mac_addr[3],HEX);
+  Serial.print("-");
+  Serial.print(mac_addr[4],HEX);   
+  Serial.print("-");
+  Serial.println(mac_addr[5],HEX);   
+}
+
 
 void serialEvent() // odebranie i obsluga komunikatow z komputera
 {
   while (Serial.available())
   {
+    Serial.println("   coś odebralismy:");
     inputString = Serial.readStringUntil('\r'); // zczytywanie danych do stringa do momentu pojawienia sie znaku konca linii
-    // stringComplete = true;
-    for (int i = 0; i < inputString.length(); i++)
-    {
-      Serial.write(inputString[i]); // przeslanie odebranych danych
-    }
+    Serial.println(inputString);
     inputString = ""; // czyszczenie stringa przechowujacego dane
   }
 }
